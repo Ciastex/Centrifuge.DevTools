@@ -1,0 +1,8 @@
+﻿{
+	"FriendlyName": "Centrifuge Dev Tools",
+	"Author": "Ciastex",
+	"Contact": "https://vdd.32-b.it",
+	"ModuleFileName": "Centrifuge.DevTools.dll",
+	"SkipLoad": false,
+	"Priority": 10
+}
