@@ -37,6 +37,9 @@
     <Reference Include="Reactor.API">
       <HintPath>..\..\Centrifuge\Reactor.API\bin\Debug\Reactor.API.dll</HintPath>
     </Reference>
+    <Reference Include="Reactor.API.GTTOD">
+      <HintPath>..\..\Centrifuge\Reactor.API.GTTOD\bin\Debug\Reactor.API.GTTOD.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
