@@ -1,11 +1,12 @@
 ﻿using CommandTerminal;
+using Harmony;
 using Reactor.API.Attributes;
 using Reactor.API.Configuration;
-using Reactor.API.GTTOD;
 using Reactor.API.Interfaces.Systems;
+using Reactor.API.Logging;
 using Reactor.API.Storage;
+using System.Reflection;
 using UnityEngine;
-using Logger = Reactor.API.Logging.Logger;
 
 namespace Centrifuge.DevTools
 {
@@ -21,51 +22,62 @@ namespace Centrifuge.DevTools
         public const string DumpSceneCommandTrigger = "sc_dump";
         public const string QuitCommandTrigger = "quit";
 
-        private Logger _logger;
+        private Log _log;
         private Settings _settings;
         private FileSystem _fileSystem;
 
         private Dumper _dumper;
 
+        private HarmonyInstance _harmony;
+
+        public void Awake()
+        {
+            _harmony = HarmonyInstance.Create("com.ciastex.github");
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
+        }
+
         public void Initialize(IManager manager)
         {
             _fileSystem = new FileSystem();
             _dumper = new Dumper(_fileSystem);
-            _logger = new Logger("event");
-
-            GameAPI.TerminalInitialized += GameAPI_TerminalInitialized;
+            _log = new Log("log");
 
             InitSettings();
+            InitializeTerminal();
+
             SetUpKeyBinds(manager.Hotkeys);
         }
 
-        private void GameAPI_TerminalInitialized(object sender, System.EventArgs e)
+        private void InitializeTerminal()
         {
-            Terminal.Shell.AddCommand(DumpSceneCommandTrigger, (args) =>
+            GTTOD.Internal.Terminal.InitFinished += (s, e) =>
             {
-                if (args[0].String == "basic")
+                Terminal.Shell.AddCommand(DumpSceneCommandTrigger, (args) =>
                 {
-                    DumpBasic();
-                    Terminal.Log("Basic dump finished.");
-                }
-                else if (args[0].String == "detailed")
-                {
-                    DumpDetailed();
-                    Terminal.Log("Detailed dump finished.");
-                }
-                else
-                {
-                    Terminal.Log("Need 'basic' or 'detailed'.");
-                }
-            }, 1, 1, "Dumps entire object tree in the current scene into a file inside mod's Data directory.");
+                    if (args[0].String == "basic")
+                    {
+                        DumpBasic();
+                        Terminal.Log("Basic dump finished.");
+                    }
+                    else if (args[0].String == "detailed")
+                    {
+                        DumpDetailed();
+                        Terminal.Log("Detailed dump finished.");
+                    }
+                    else
+                    {
+                        Terminal.Log("Need 'basic' or 'detailed'.");
+                    }
+                }, 1, 1, "Dumps entire object tree in the current scene into a file inside mod's Data directory.");
 
-            Terminal.Shell.AddCommand(QuitCommandTrigger, (args) =>
-            {
-                Application.Quit(0);
-            }, 0, -1, "Quits the game.");
+                Terminal.Shell.AddCommand(QuitCommandTrigger, (args) =>
+                {
+                    Application.Quit(0);
+                }, 0, -1, "Quits the game.");
 
-            Terminal.Autocomplete.Register(DumpSceneCommandTrigger);
-            Terminal.Autocomplete.Register(QuitCommandTrigger);
+                Terminal.Autocomplete.Register(DumpSceneCommandTrigger);
+                Terminal.Autocomplete.Register(QuitCommandTrigger);
+            };
         }
 
         private void InitSettings()
@@ -99,13 +111,13 @@ namespace Centrifuge.DevTools
 
         private void DumpBasic()
         {
-            _logger.Info("Performing basic scene dump...");
+            _log.Info("Performing basic scene dump...");
             _dumper.DumpCurrentScene(false);
         }
 
         private void DumpDetailed()
         {
-            _logger.Info("Performing detailed scene dump...");
+            _log.Info("Performing detailed scene dump...");
             _dumper.DumpCurrentScene(true);
         }
     }
